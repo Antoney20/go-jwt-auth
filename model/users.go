@@ -124,3 +124,9 @@ func (u *User) HashPassword() {
     }
     u.Password = string(hashedPassword)
 }
+
+//  login
+func (u *User) CheckPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	return err == nil
+}

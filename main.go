@@ -5,7 +5,7 @@ import (
 
 	"example.com/jwt-auth/config"
 	"example.com/jwt-auth/controller"
-	"example.com/jwt-auth/models"
+	"example.com/jwt-auth/model"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -32,6 +32,7 @@ func main() {
 	router := gin.Default()
 
 	router.POST("/register", controller.RegisterUser)
+	router.POST("/login", controller.LoginUser)
 
 	// Start the server
 	if err := router.Run(":8080"); err != nil {
