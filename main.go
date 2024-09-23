@@ -5,7 +5,7 @@ import (
 
 	"example.com/jwt-auth/config"
 	"example.com/jwt-auth/controller"
-	"example.com/jwt-auth/model"
+	"example.com/jwt-auth/models"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -24,9 +24,10 @@ func main() {
 	}
 
 	// Auto migrate models
-	if err := config.DB.AutoMigrate(&model.User{}); err != nil {
+	if err := config.DB.AutoMigrate(&model.User{}, &model.RefreshToken{}); err != nil {
 		log.Fatalf("Failed to auto-migrate models: %v", err)
 	}
+
 	log.Println("Migrations successful")
 
 	router := gin.Default()

@@ -4,6 +4,7 @@ import (
     "errors"
     "regexp"
     "strings"
+    "time"
 
     "golang.org/x/crypto/bcrypt"
     "gorm.io/gorm"
@@ -16,6 +17,16 @@ type User struct {
     PhoneNumber string `gorm:"unique;not null"`
     Password    string `gorm:"not null"`
 }
+
+type RefreshToken struct {
+	ID          uint      `gorm:"primaryKey"`
+	UserID      uint      `gorm:"index"`
+	Token       string    `gorm:"unique;not null"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	ExpiresAt   time.Time
+	IsActive    bool
+}
+
 
 // validation--- registration
 func (u *User) Validate(db *gorm.DB) error {
@@ -74,7 +85,7 @@ func isNumeric(s string) bool {
 
 // fot common passwords
 func isCommonPassword(password string) bool {
-    commonPasswords := []string{"123456", "1235","password", "123456789", "qwerty", "abc123"}
+    commonPasswords := []string{"123456", "12345","password", "123456789", "qwerty", "abc123"}
     for _, common := range commonPasswords {
         if password == common {
             return true
@@ -100,7 +111,6 @@ func containsAlphanumeric(s string) bool {
 }
 
 func ValidatePhoneNumber(phoneNumber string) error {
-    // Remove any 'i' characters
     normalized := strings.ReplaceAll(phoneNumber, "i", "")
 
     re := regexp.MustCompile(`^[0-9]+$`)

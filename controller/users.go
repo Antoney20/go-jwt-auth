@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"example.com/jwt-auth/config"
-	"example.com/jwt-auth/model"
+	"example.com/jwt-auth/models"
 	"example.com/jwt-auth/tokens"
 	"github.com/gin-gonic/gin"
 	// "golang.org/x/crypto/bcrypt"
@@ -50,7 +50,7 @@ func RegisterUser(c *gin.Context) {
 // LoginUser handles user login
 func LoginUser(c *gin.Context) {
 	var inputdata struct {
-		Identifier string `json:"identifier"` // Can be email or username
+		Identifier string `json:"identifier"` 
 		Password   string `json:"password"`
 	}
 
@@ -79,6 +79,7 @@ func LoginUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate tokens"})
 		return
 	}
+
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":       "Login successful!",
