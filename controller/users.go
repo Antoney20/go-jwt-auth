@@ -3,12 +3,11 @@ package controller
 import (
 	"log"
 	"net/http"
-	"strings"
-
 
 	"example.com/jwt-auth/config"
 	"example.com/jwt-auth/models"
 	"example.com/jwt-auth/tokens"
+	"example.com/jwt-auth/middleware"
 	"github.com/gin-gonic/gin"
 	// "golang.org/x/crypto/bcrypt"
 )
@@ -52,7 +51,7 @@ func RegisterUser(c *gin.Context) {
 // LoginUser handles user login
 func LoginUser(c *gin.Context) {
 	var inputdata struct {
-		Identifier string `json:"identifier"` 
+		Identifier string `json:"identifier"`
 		Password   string `json:"password"`
 	}
 
@@ -90,50 +89,18 @@ func LoginUser(c *gin.Context) {
 }
 
 
-
-
-// RefreshToken handles token refresh
-func RefreshToken(c *gin.Context) {
-	var refreshToken string
-	refreshToken = c.GetHeader("Refresh-Token")
-
-	if refreshToken == "" {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader != "" {
-			splitToken := strings.Split(authHeader, "Bearer ")
-			if len(splitToken) == 2 {
-				refreshToken = splitToken[1]
-			}
-		}
-	}
-	if refreshToken == "" {
-		refreshToken = c.Query("refresh_token")
-	}
-
-
-	if refreshToken == "" {
-		refreshToken = c.PostForm("refresh_token")
-	}
-
-	if refreshToken == "" {
-		var jsonInput struct {
-			RefreshToken string `json:"refresh_token"`
-		}
-		if err := c.ShouldBindJSON(&jsonInput); err == nil {
-			refreshToken = jsonInput.RefreshToken
-		}
-	}
-
-	if refreshToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Refresh token is required"})
-		return
-	}
-
-	newAccessToken, err := tokens.RefreshAccessToken(refreshToken)
+func GetProfile(c *gin.Context) {
+	userID, err := middleware.GetUserIDFromToken(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"access_token": newAccessToken})
+	var profile model.Profile
+	if err := config.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Profile not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"profile": profile})
 }

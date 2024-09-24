@@ -18,6 +18,18 @@ type User struct {
 }
 
 
+type Profile struct {
+	gorm.Model
+	UserID          uint   `gorm:"not null;unique"`
+	FirstName       string `gorm:"size:100"`       
+	LastName        string `gorm:"size:100"`      
+	IsEmailVerified bool   `gorm:"default:false"`  
+	IsActive        bool   `gorm:"default:true"`  
+	UserRole        string `gorm:"default:'user'"` 
+	Image           string `gorm:"size:255"`       
+	Bio             string `gorm:"type:text"`      
+}
+
 
 // validation--- registration
 func (u *User) Validate(db *gorm.DB) error {
