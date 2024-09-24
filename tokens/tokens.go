@@ -2,6 +2,7 @@ package tokens
 
 import (
 	"errors"
+	"net/http"
 	"os"
 	"time"
 
@@ -15,6 +16,16 @@ type UserClaims struct {
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
+
+type TokenError struct {
+	Message    string
+	StatusCode int
+}
+
+func (e *TokenError) Error() string {
+	return e.Message
+}
+
 
 func GenerateTokens(id uint, username string) (string, string, error) {
 	accessTokenExpiration := time.Now().Add(15 * time.Minute)
@@ -55,15 +66,16 @@ func ValidateToken(tokenString string) (*UserClaims, error) {
 	})
 
 	if err != nil {
-		return nil, errors.New("invalid token")
+		return nil, &TokenError{"Invalid token", http.StatusUnauthorized}
 	}
 
 	if claims, ok := token.Claims.(*UserClaims); ok && token.Valid {
 		return claims, nil
 	}
 
-	return nil, errors.New("invalid token")
+	return nil, &TokenError{"Invalid token", http.StatusUnauthorized}
 }
+
 
 func RefreshAccessToken(refreshToken string) (string, error) {
 	claims, err := ValidateToken(refreshToken)

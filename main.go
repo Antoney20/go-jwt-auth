@@ -35,7 +35,8 @@ func main() {
 	router.POST("/register", controller.RegisterUser)
 	router.POST("/login", controller.LoginUser)
 	router.POST("/refresh-token", controller.RefreshToken)
-	router.POST("/profile", controller.GetProfile)
+	router.GET("/profile", controller.GetProfile)
+	router.POST("/profile", controller.CreateProfile)
 	// Start the server
 	if err := router.Run(":8080"); err != nil {
 		log.Fatalf("Failed to run server: %v", err)

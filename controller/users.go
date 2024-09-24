@@ -92,7 +92,7 @@ func LoginUser(c *gin.Context) {
 func GetProfile(c *gin.Context) {
 	userID, err := middleware.GetUserIDFromToken(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -103,4 +103,26 @@ func GetProfile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"profile": profile})
+}
+
+func CreateProfile(c *gin.Context) {
+	var profile model.Profile
+	if err := c.ShouldBindJSON(&profile); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	userID, err := middleware.GetUserIDFromToken(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	profile.UserID = userID
+	if err := config.DB.Create(&profile).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create profile"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"profile": profile})
 }
