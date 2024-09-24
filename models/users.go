@@ -4,7 +4,6 @@ import (
     "errors"
     "regexp"
     "strings"
-    "time"
 
     "golang.org/x/crypto/bcrypt"
     "gorm.io/gorm"
@@ -18,14 +17,6 @@ type User struct {
     Password    string `gorm:"not null"`
 }
 
-type RefreshToken struct {
-	ID          uint      `gorm:"primaryKey"`
-	UserID      uint      `gorm:"index"`
-	Token       string    `gorm:"unique;not null"`
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
-	ExpiresAt   time.Time
-	IsActive    bool
-}
 
 
 // validation--- registration

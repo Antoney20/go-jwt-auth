@@ -10,21 +10,19 @@ import (
 
 var jwtSecretKey = []byte(os.Getenv("SECRET_KEY"))
 
-// TokenClaims represents the custom claims for the JWT
-type TokenClaims struct {
-	UserID uint `json:"user_id"`
+type UserClaims struct {
+	ID       uint   `json:"id"`
+	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
 
-// GenerateTokens generates access and refresh tokens
-func GenerateTokens(userID uint) (string, string, error) {
-	// Set token expiration times
+func GenerateTokens(id uint, username string) (string, string, error) {
 	accessTokenExpiration := time.Now().Add(15 * time.Minute)
-	refreshTokenExpiration := time.Now().Add(7 * 24 * time.Hour)
+	refreshTokenExpiration := time.Now().Add(30 * 24 * time.Hour) // 30 days
 
-	// Create access token
-	accessTokenClaims := TokenClaims{
-		UserID: userID,
+	accessTokenClaims := UserClaims{
+		ID:       id,
+		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accessTokenExpiration),
 		},
@@ -32,12 +30,12 @@ func GenerateTokens(userID uint) (string, string, error) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessTokenClaims)
 	accessTokenString, err := accessToken.SignedString(jwtSecretKey)
 	if err != nil {
-		return "", "", err
+		return "", "", errors.New("could not generate tokens")
 	}
 
-	// Create refresh token
-	refreshTokenClaims := TokenClaims{
-		UserID: userID,
+	refreshTokenClaims := UserClaims{
+		ID:       id,
+		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(refreshTokenExpiration),
 		},
@@ -45,25 +43,80 @@ func GenerateTokens(userID uint) (string, string, error) {
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshTokenClaims)
 	refreshTokenString, err := refreshToken.SignedString(jwtSecretKey)
 	if err != nil {
-		return "", "", err
+		return "", "", errors.New("could not generate tokens")
 	}
 
 	return accessTokenString, refreshTokenString, nil
 }
 
-// ValidateToken checks if the token is valid
-func ValidateToken(tokenString string) (uint, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+func ValidateToken(tokenString string) (*UserClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecretKey, nil
 	})
 
 	if err != nil {
-		return 0, err
+		return nil, errors.New("invalid token")
 	}
 
-	if claims, ok := token.Claims.(*TokenClaims); ok && token.Valid {
-		return claims.UserID, nil
+	if claims, ok := token.Claims.(*UserClaims); ok && token.Valid {
+		return claims, nil
 	}
 
-	return 0, errors.New("invalid or expired token")
+	return nil, errors.New("invalid token")
 }
+
+func RefreshAccessToken(refreshToken string) (string, error) {
+	claims, err := ValidateToken(refreshToken)
+	if err != nil {
+		return "", errors.New("invalid refresh token")
+	}
+
+	// Here you would typically check if the user still has permission to generate a new token
+	// For example, check if the user still exists in the database and has the necessary permissions
+	// For this example, we'll assume the check passes
+
+	accessTokenExpiration := time.Now().Add(15 * time.Minute)
+	newClaims := UserClaims{
+		ID:       claims.ID,
+		Username: claims.Username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(accessTokenExpiration),
+		},
+	}
+
+	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
+	accessTokenString, err := newToken.SignedString(jwtSecretKey)
+	if err != nil {
+		return "", errors.New("could not generate new access token")
+	}
+
+	return accessTokenString, nil
+}
+// func RefreshAccessToken(refreshToken string) (string, error) {
+// 	claims, err := ValidateToken(refreshToken)
+// 	if err != nil {
+// 		return "", errors.New("invalid refresh token")
+// 	}
+
+// 	// Here you would typically check if the user still has permission to generate a new token
+// 	// For example, check if the user still exists in the database and has the necessary permissions
+// 	// For this example, we'll assume the check passes
+
+// 	accessTokenExpiration := time.Now().Add(15 * time.Minute)
+// 	newClaims := UserClaims{
+// 		ID:    claims.ID,
+// 		First: claims.First,
+// 		Last:  claims.Last,
+// 		RegisteredClaims: jwt.RegisteredClaims{
+// 			ExpiresAt: jwt.NewNumericDate(accessTokenExpiration),
+// 		},
+// 	}
+
+// 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
+// 	accessTokenString, err := newToken.SignedString(jwtSecretKey)
+// 	if err != nil {
+// 		return "", errors.New("could not generate new access token")
+// 	}
+
+// 	return accessTokenString, nil
+// }

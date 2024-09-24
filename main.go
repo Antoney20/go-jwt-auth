@@ -24,7 +24,7 @@ func main() {
 	}
 
 	// Auto migrate models
-	if err := config.DB.AutoMigrate(&model.User{}, &model.RefreshToken{}); err != nil {
+	if err := config.DB.AutoMigrate(&model.User{}); err != nil {
 		log.Fatalf("Failed to auto-migrate models: %v", err)
 	}
 
@@ -34,6 +34,7 @@ func main() {
 
 	router.POST("/register", controller.RegisterUser)
 	router.POST("/login", controller.LoginUser)
+	router.POST("/refresh-token", controller.RefreshToken)
 
 	// Start the server
 	if err := router.Run(":8080"); err != nil {
