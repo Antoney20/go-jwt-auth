@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"net/http"
 	"strings"
 
 	"example.com/jwt-auth/tokens"
@@ -25,4 +26,18 @@ func GetUserIDFromToken(c *gin.Context) (uint, error) {
 	}
 
 	return claims.ID, nil
+}
+
+func AuthenticateMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, err := GetUserIDFromToken(c)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.Abort() 
+			return
+		}
+
+		c.Set("userID", userID)
+		c.Next() 
+	}
 }

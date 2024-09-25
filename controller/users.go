@@ -126,3 +126,4 @@ func CreateProfile(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"profile": profile})
 }
+

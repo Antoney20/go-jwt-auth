@@ -5,6 +5,7 @@ import (
 
 	"example.com/jwt-auth/config"
 	"example.com/jwt-auth/controller"
+	"example.com/jwt-auth/middleware"
 	"example.com/jwt-auth/models"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -35,8 +36,9 @@ func main() {
 	router.POST("/register", controller.RegisterUser)
 	router.POST("/login", controller.LoginUser)
 	router.POST("/refresh-token", controller.RefreshToken)
-	router.GET("/profile", controller.GetProfile)
-	router.POST("/profile", controller.CreateProfile)
+	router.GET("/profile", middleware.AuthenticateMiddleware(), controller.GetProfile)
+	router.POST("/profile", middleware.AuthenticateMiddleware(), controller.CreateProfile)
+	
 	// Start the server
 	if err := router.Run(":8080"); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
