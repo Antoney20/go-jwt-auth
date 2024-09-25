@@ -1,12 +1,13 @@
 package model
 
 import (
-    "errors"
-    "regexp"
-    "strings"
+	"errors"
+	"strings"
 
-    "golang.org/x/crypto/bcrypt"
-    "gorm.io/gorm"
+	"regexp"
+
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -33,7 +34,7 @@ type Profile struct {
 
 // validation--- registration
 func (u *User) Validate(db *gorm.DB) error {
-    if u.Username == "" || u.PhoneNumber == "" || u.Password == "" {
+    if u.Username == "" || u.PhoneNumber == "" || u.Email == ""|| u.Password == "" {
         return errors.New("all fields are required")
     }
 
@@ -113,20 +114,23 @@ func containsAlphanumeric(s string) bool {
     return hasLetter && hasNumber
 }
 
+
 func ValidatePhoneNumber(phoneNumber string) error {
-    normalized := strings.ReplaceAll(phoneNumber, "i", "")
+	// Remove any 'i' characters
+	normalized := strings.ReplaceAll(phoneNumber, "i", "")
 
-    re := regexp.MustCompile(`^[0-9]+$`)
-    if !re.MatchString(normalized) {
-        return errors.New("phone number must be entirely numeric")
-    }
+	// Check if the phone number contains only digits
+	re := regexp.MustCompile(`^[0-9]+$`)
+	if !re.MatchString(normalized) {
+		return errors.New("phone number must be entirely numeric")
+	}
 
-    // Check length
-    if len(normalized) < 9 || len(normalized) > 12 {
-        return errors.New("phone number must be between 9 and 12 digits long")
-    }
+	// Check length (9-12 digits)
+	if len(normalized) < 9 || len(normalized) > 12 {
+		return errors.New("phone number must be between 9 and 12 digits long")
+	}
 
-    return nil
+	return nil
 }
 
 // finally hash passwd

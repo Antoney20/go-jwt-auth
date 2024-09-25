@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"example.com/jwt-auth/config"
+	"example.com/jwt-auth/middleware"
 	"example.com/jwt-auth/models"
 	"example.com/jwt-auth/tokens"
-	"example.com/jwt-auth/middleware"
 	"github.com/gin-gonic/gin"
 	// "golang.org/x/crypto/bcrypt"
 )
@@ -27,6 +27,7 @@ func RegisterUser(c *gin.Context) {
 	}
 
 	var existingUser model.User
+
 	if err := config.DB.Where("phone_number = ?", user.PhoneNumber).First(&existingUser).Error; err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Phone number is already registered"})
 		return
@@ -88,7 +89,6 @@ func LoginUser(c *gin.Context) {
 	})
 }
 
-
 func GetProfile(c *gin.Context) {
 	userID, err := middleware.GetUserIDFromToken(c)
 	if err != nil {
@@ -127,3 +127,35 @@ func CreateProfile(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"profile": profile})
 }
 
+func UpdateProfile(c *gin.Context) {
+	var updateData model.Profile
+	userID, err := middleware.GetUserIDFromToken(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized access"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&updateData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data"})
+		return
+	}
+
+	var existingProfile model.Profile
+	if err := config.DB.Where("user_id = ?", userID).First(&existingProfile).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Profile not found"})
+		return
+	}
+
+	// Update only allowed fields
+	existingProfile.FirstName = updateData.FirstName
+	existingProfile.LastName = updateData.LastName
+	existingProfile.Image = updateData.Image
+	existingProfile.Bio = updateData.Bio
+
+	if err := config.DB.Save(&existingProfile).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully", "profile": existingProfile})
+}
