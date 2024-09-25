@@ -39,6 +39,7 @@ func main() {
 	router.GET("/profile", middleware.AuthenticateMiddleware(), controller.GetProfile)
 	router.POST("/profile", middleware.AuthenticateMiddleware(), controller.CreateProfile)
 	router.PUT("/profile", middleware.AuthenticateMiddleware(), controller.UpdateProfile)
+	router.DELETE("/profile", middleware.AuthenticateMiddleware(), controller.DeleteProfile)
 
 
 	// Start the server
